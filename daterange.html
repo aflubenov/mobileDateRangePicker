@@ -1,0 +1,342 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>DateRange Picker </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+        crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+    <!-- script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script -->
+    <!-- link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" / -->
+    <style>
+        .mytq-drpiker-dayname {
+            display: inline-block;
+            width: 14.28%;
+            text-align: center;
+        }
+
+        .mytq-drpiker-day {
+            display: inline-block;
+            width: 14.28%;
+            text-align: right;
+        }
+
+        .mytq-drpiker-day {
+            display: inline-block;
+            width: 14.28%;
+            text-align: right;
+            margin-bottom: 2px;
+            padding-right: 10px;
+        }
+
+        .mytq-drpiker-prevMonth,
+        .mytq-drpiker-nextMonth {
+            color: #cacaca;
+        }
+
+        .mytq-drpicker-monthName {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .mytq-drpiker-day.selected {
+            background-color: aquamarine;
+        }
+
+        .mytq-drpiker-day.fselected {
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px;
+        }
+
+        .mytq-drpiker-day.lselected {
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+
+        .mytq-drpiker-montContainer {
+            width: 50%;
+            display: inline-block;
+            padding: 5px;
+        }
+
+        .mytq-drpiker-monthCal {
+            background-color: #f6f6f6;
+        }
+
+        @media(max-width: 415px) {
+            .mytq-drpiker-montContainer {
+                width: 100%;
+                display: inline-block;
+                padding: 0px;
+                margin-bottom: 10px;
+            }
+        }
+
+        .mytq-drpiker-day.mytq-drpiker-prevMonth.mytq-drpiker-sunday {
+            color: #ff9a9a;
+        }
+
+        .mytq-drpiker-day.mytq-drpiker-sunday {
+            color: #d80000;
+        }
+
+        .mytq-drpiker-day.actual {
+            background-color: green;
+        }
+    </style>
+</head>
+
+<body>
+    <form>
+        <div class="form-group">
+            <label>Fecha</label>
+            <input type="text" class="form-control form-control-sm" name="datpicker" id="eldatepiker">
+            <div id="daterange"></div>
+        </div>
+    </form>
+</body>
+<script>
+    let el = document.getElementById('daterange');
+    let days = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+    let months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    let sDaySel = null;
+    let eDaySel = null;
+
+    let createDateRangeMonth = (pSDate) => {
+        let pDate = moment(pSDate, 'YYYYMMDD');
+        let refDate = moment(pSDate, 'YYYYMMDD');
+        let ammountOfDays = 42;
+
+        let sMonth = months[pDate.month()];
+        let dayOfMonth = pDate.date();
+        let oRet = {
+            refDateRangeStart: null,
+            refDate: null,
+            days: Array(ammountOfDays)
+        }
+        refDate.add(-dayOfMonth + 1, 'days');
+        let dayOfWeek = refDate.weekday();
+        refDate.add(-dayOfWeek, 'days');
+
+        for (let i = 0; i < ammountOfDays; i++) {
+            oRet.days[i] = refDate.date();
+            refDate.add(1, 'days');
+        }
+
+        oRet.refDate = pDate;
+
+        oRet.refDateRangeStart = moment(refDate.add(-ammountOfDays, 'days').format('YYYYMMDD'), 'YYYYMMDD');
+        return oRet;
+    }
+
+    let drawMonth = (pSDate, pEl) => {
+        let oDate = createDateRangeMonth(pSDate);
+        let sMonth = months[oDate.refDate.month()];
+        let i = 0;
+        let elCalContainer = document.createElement('div');
+
+        elCalContainer.classList.add('mytq-drpiker-montContainer');
+
+        let el = document.createElement('div');
+        el.classList.add('mytq-drpiker-monthCal');
+        elCalContainer.appendChild(el);
+
+        //nombre del mes
+        let oM = document.createElement('div');
+        oM.classList.add('mytq-drpicker-monthName')
+        oM.innerText = sMonth;
+        el.appendChild(oM);
+
+        //nombre de los días
+        for (i = 0; i < days.length; i++) {
+            oM = document.createElement('div');
+            oM.classList.add('mytq-drpiker-dayname');
+            oM.innerText = days[i];
+            el.appendChild(oM);
+        }
+
+        //primeras dos semanas
+        for (i = 0; i < 14; i++) {
+            oM = document.createElement('div');
+            oM.classList.add('mytq-drpiker-day');
+            if (oDate.days[i] > 14){
+                // oM.classList.add('mytq-drpiker-prevMonth');
+            } else {
+                oM.innerText = oDate.days[i];
+                oM.setAttribute('data-date', oDate.refDateRangeStart.unix());
+            }
+            oDate.refDateRangeStart.add(1, 'days');
+            el.appendChild(oM);
+            if (i % 7 === 0) {
+                oM.classList.add('mytq-drpiker-sunday');
+            }
+        }
+
+        //de la tercer semana en adelante
+        i = 14;
+        for (let s = 2; s < 6; s++) {
+            for (j = 0; j < 7; j++) {
+                oM = document.createElement('div');
+                oM.classList.add('mytq-drpiker-day');
+                if (oDate.days[i] <= 7) {
+                   // oM.classList.add('mytq-drpiker-nextMonth');
+                } else {
+                    oM.innerText = oDate.days[i];
+                    oM.setAttribute('data-date', oDate.refDateRangeStart.unix());
+                }
+                oDate.refDateRangeStart.add(1, 'days');
+                if (i % 7 === 0) {
+                    oM.classList.add('mytq-drpiker-sunday');
+                }
+                el.appendChild(oM);
+
+                i += 1;
+            }
+            if (oDate.days[i - 1] <= 7) break;
+            if (oDate.days[i] == 1) break;
+
+        }
+        pEl.appendChild(elCalContainer);
+    }
+
+    /**
+     * s y e deben ser fechas en formato unix time-stamp
+     * */
+    let selectDays = (s, e) => {
+        //traemos todos los días mostrados
+        let _days = el.getElementsByClassName('mytq-drpiker-day');
+        let l = _days.length;
+        let currDate = null;
+        let currEl = null;
+
+        for (let i = 0; i < l; i++) {
+            currEl = _days[i];
+            currDate = parseInt(currEl.dataset['date'], 10);
+            if (currDate >= s && currDate <= e) {
+                currEl.classList.add('selected');
+            } else {
+                currEl.classList.remove('selected');
+                currEl.classList.remove('fselected');
+                currEl.classList.remove('lselected');
+            }
+        }
+
+        _days = el.getElementsByClassName('selected');
+        _days[0].classList.add('fselected');
+        _days[_days.length - 1].classList.add('lselected');
+
+    }
+
+    let clickHandler = (e) => {
+        e.preventDefault();
+        let _el = e.target;
+        let _unixDate = _el.dataset['date'];
+
+        if(! _unixDate) return false;
+
+        _unixDate = parseInt(_unixDate, 10);
+
+        //desseleccionamos cualquier elemento anteriormente clicado
+        prevSel = el.getElementsByClassName('actual');
+        if(prevSel.length > 0) {
+            prevSel[0].classList.remove('actual');
+        }
+
+        //marcamos el actual elemento como seleccionado
+        _el.classList.add('actual');
+
+        //quitamos cualquier rango de fechas previamente seleccionado
+        unselectAll(el);
+
+        //si hay 'desde' y 'hasta' seleccionados
+        //entonces los desseleccionamos
+        if(sDaySel && eDaySel) {
+            sDaySel = null;
+            eDaySel = null;
+            //return;
+        }
+        //si no hay nada seleccionado, seteamos el "desde"
+        if(!sDaySel && !eDaySel) {
+            sDaySel = _unixDate;
+            return;
+        };
+
+        //alguno de los dos (desde o hasta) está seleccionado, analizamos cómo ordenarlos
+        //primero vemos que no sea el mismo valor
+        if(sDaySel === _unixDate ) {
+            _el.classList.remove('actual');
+            sDaySel = null;
+            return;
+        }
+        if( eDaySel === _unixDate) {
+            eDaySel = null;
+            _el.classList.remove('actual');
+            return;
+        }
+
+        //no es igual a nada ya seleccionado, pero sabemos que hay solo un valor (desde o hasta)
+        //previamente seleccionado, así que los ordenamos 
+
+        let _prevVal = sDaySel || eDaySel;
+        if(_unixDate < _prevVal) {
+            sDaySel = _unixDate;
+            eDaySel = _prevVal;
+        } else {
+            sDaySel = _prevVal;
+            eDaySel = _unixDate;
+        }
+        
+        //marcamos la seleccion
+        selectDays(sDaySel, eDaySel);
+
+    }
+
+    let unselectAll = (pRootEl) => {
+        let els = pRootEl.getElementsByClassName('selected');
+        let l = els.length;
+        if(l > 0) {
+            for(let i = l-1; i >= 0; i --) {
+                els[i].classList.remove('selected');
+            }
+        }
+
+        els = pRootEl.getElementsByClassName('lselected');
+        l = els.length;
+        if(l > 0) {
+            for(let i = l-1; i >= 0; i --) {
+                els[i].classList.remove('lselected');
+            }
+        }
+        els = pRootEl.getElementsByClassName('fselected');
+        l = els.length;
+        if(l > 0) {
+            for(let i = l-1; i >= 0; i --) {
+                els[i].classList.remove('fselected');
+            }
+        }
+    }
+
+    el.addEventListener('click', clickHandler);
+
+    //let today = moment();
+    drawMonth(20180101, el);
+    drawMonth(20180201, el);
+    drawMonth(20180301, el);
+    drawMonth(20180401, el);
+    drawMonth(20180501, el);
+    drawMonth(20180601, el);
+    drawMonth(20180701, el);
+    drawMonth(20180801, el);
+    drawMonth(20180901, el);
+    drawMonth(20181001, el);
+    drawMonth(20181101, el);
+    drawMonth(20181201, el);
+</script>
+
+</html>
